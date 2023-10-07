@@ -129,6 +129,7 @@ class AuthorController extends Controller
 
         if ($response->allowed()) {
             // The action is authorized...
+            
             $author->delete();
     
             return response()->json(['message' => 'Author deleted successfully']);

@@ -15,6 +15,9 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')->hourly();
     }
 
+    protected $middleware = [
+        \Illuminate\Http\Middleware\HandleCors::class,
+    ];
     /**
      * Register the commands for the application.
      */
