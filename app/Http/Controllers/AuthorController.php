@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use App\Http\Resources\AuthorResource;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Gate;
+
 
 class AuthorController extends Controller
 {
@@ -15,6 +17,7 @@ class AuthorController extends Controller
      */
     public function index()
     {
+       
         return AuthorResource::collection(Author::all());
     }
 
@@ -23,27 +26,39 @@ class AuthorController extends Controller
      */
     public function store(Request $request)
     {
-        try
-        {
-            $request->validate([
-                'name' => 'required',
-                'email' => 'required|email|unique:authors',
-                'country' => 'required',
+
+        $response = Gate::inspect('manage');
+ 
+        if ($response->allowed()) {
+            // The action is authorized...
+            
+            try
+            {
+                $request->validate([
+                    'name' => 'required',
+                    'email' => 'required|email|unique:authors',
+                    'country' => 'required',
+                ]);
+            } 
+            catch (ValidationException $e)
+            {
+                return $e->validator->errors();
+            }
+
+            $author = Author::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'country' => $request->country,
             ]);
-        } 
-        catch (ValidationException $e)
-        {
-            return $e->validator->errors();
+
+
+            return response()->json(['message' => 'Author created successfully']);
+
+        } else {
+            $messgae = $response->message();
+            return response()->json(['message' => $messgae]);
         }
 
-        $author = Author::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'country' => $request->country,
-        ]);
-
-
-        return response()->json(['message' => 'Author created successfully']);
     }
 
     /**
@@ -51,7 +66,17 @@ class AuthorController extends Controller
      */
     public function show(Author $author)
     {
-        return new AuthorResource($author);
+        $response = Gate::inspect('manage');
+
+        if ($response->allowed()) {
+            // The action is authorized...
+            return new AuthorResource($author);
+
+        } else {
+            $messgae = $response->message();
+            return response()->json(['message' => $messgae]);
+        }
+        
     }
 
 
@@ -60,30 +85,39 @@ class AuthorController extends Controller
      */
     public function update(Request $request, Author $author)
     {
-        try
-        {
-            $request->validate([
-                'name' => 'required',
-                'email' =>  [
-                    'required',
-                    'email',
-                    Rule::unique('authors')->ignore($author->id),
-                ],
-                'country' => 'required',
-            ]);
-        } 
-        catch (ValidationException $e)
-        {
-            return $e->validator->errors();
+
+        $response = Gate::inspect('manage');
+
+        if ($response->allowed()) {
+            // The action is authorized...
+            try
+            {
+                $request->validate([
+                    'name' => 'required',
+                    'email' =>  [
+                        'required',
+                        'email',
+                        Rule::unique('authors')->ignore($author->id),
+                    ],
+                    'country' => 'required',
+                ]);
+            } 
+            catch (ValidationException $e)
+            {
+                return $e->validator->errors();
+            }
+    
+            // update the author
+            $author->name = $request->name;
+            $author->email = $request->email;
+            $author->country = $request->country;
+            $author->save();
+    
+            return response()->json(['message' => 'Author updated successfully']);
+        } else {
+            $messgae = $response->message();
+            return response()->json(['message' => $messgae]);
         }
-
-        // update the author
-        $author->name = $request->name;
-        $author->email = $request->email;
-        $author->country = $request->country;
-        $author->save();
-
-        return response()->json(['message' => 'Author updated successfully']);
     }
 
     /**
@@ -91,8 +125,17 @@ class AuthorController extends Controller
      */
     public function destroy(Author $author)
     {
-        $author->delete();
+        $response = Gate::inspect('manage');
 
-        return response()->json(['message' => 'Author deleted successfully']);
+        if ($response->allowed()) {
+            // The action is authorized...
+            $author->delete();
+    
+            return response()->json(['message' => 'Author deleted successfully']);
+            
+        } else {
+            $messgae = $response->message();
+            return response()->json(['message' => $messgae]);
+        }
     }
 }

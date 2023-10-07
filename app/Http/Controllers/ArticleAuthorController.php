@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Article;
 use App\Http\Resources\ArticleAuthorResource;
 use App\Http\Resources\AuthorResource;
+use Illuminate\Support\Facades\Gate;
 
 class ArticleAuthorController extends Controller
 {
@@ -23,10 +24,20 @@ class ArticleAuthorController extends Controller
      */
     public function addArticleAuthor(string $articleId, string $authorId )
     {
-        $article = Article::findOrFail($articleId);
-        $article->authors()->attach($authorId);
+        $response = Gate::inspect('manage');
 
-        return response()->json(['message' => 'Author added successfully.']);
+        if ($response->allowed()) {
+            // The action is authorized...
+            $article = Article::findOrFail($articleId);
+            $article->authors()->attach($authorId);
+    
+            return response()->json(['message' => 'Author added successfully.']);
+            
+        } else {
+            $messgae = $response->message();
+            return response()->json(['message' => $messgae]);
+        }
+
     }
 
     /**
@@ -34,10 +45,19 @@ class ArticleAuthorController extends Controller
      */
     public function showArticleAuthors(string $id)
     {
-        $article = Article::findOrFail($id);
-        $authors = $article->authors;
+        $response = Gate::inspect('manage');
 
-        return AuthorResource::collection($authors);
+        if ($response->allowed()) {
+            // The action is authorized...
+            $article = Article::findOrFail($id);
+            $authors = $article->authors;
+    
+            return AuthorResource::collection($authors);
+        } else {
+            $messgae = $response->message();
+            return response()->json(['message' => $messgae]);
+        }
+
     }
 
 
@@ -47,9 +67,18 @@ class ArticleAuthorController extends Controller
      */
     public function deleteArticleAuthor(string $articleId, string $authorId )
     {
-        $article = Article::findOrFail($articleId);
-        $article->authors()->detach($authorId);
 
-        return response()->json(['message' => 'Author deleted successfully from the atricle authors list.']);
+        $response = Gate::inspect('manage');
+
+        if ($response->allowed()) {
+            // The action is authorized...
+            $article = Article::findOrFail($articleId);
+            $article->authors()->detach($authorId);
+    
+            return response()->json(['message' => 'Author deleted successfully from the atricle authors list.']);
+        } else {
+            $messgae = $response->message();
+            return response()->json(['message' => $messgae]);
+        }
     }
 }

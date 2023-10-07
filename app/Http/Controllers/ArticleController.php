@@ -8,6 +8,8 @@ use Illuminate\Validation\ValidationException;
 use App\Http\Resources\ArticleResource;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Gate;
+
 
 class ArticleController extends Controller
 {
@@ -16,7 +18,16 @@ class ArticleController extends Controller
      */
     public function index()
     {
-        return ArticleResource::collection(Article::all());
+        $response = Gate::inspect('manage');
+
+        if ($response->allowed()) {
+            // The action is authorized...
+            return ArticleResource::collection(Article::all());
+            
+        } else {
+            $messgae = $response->message();
+            return response()->json(['message' => $messgae]);
+        }
     }
 
     /**
@@ -24,34 +35,44 @@ class ArticleController extends Controller
      */
     public function store(Request $request)
     {
-        try
-        {
-            $request->validate([
-                'title' => 'required',
-                'article_text' => 'required',
-                'image' => 'required|image'
-            ]);
-        } 
-        catch (ValidationException $e)
-        {
-            return $e->validator->errors();
-        }
 
-        if ($request->file('image')->isValid()) {
-            $imagePath = $request->file('image')->store('images', 'public'); 
+        $response = Gate::inspect('manage');
+
+        if ($response->allowed()) {
+            // The action is authorized...
+            try
+            {
+                $request->validate([
+                    'title' => 'required',
+                    'article_text' => 'required',
+                    'image' => 'required|image'
+                ]);
+            } 
+            catch (ValidationException $e)
+            {
+                return $e->validator->errors();
+            }
+    
+            if ($request->file('image')->isValid()) {
+                $imagePath = $request->file('image')->store('images', 'public'); 
+            } else {
+                return response()->json(['message' => 'Invalid image upload.'], 400);
+            }
+    
+            $article = new Article();
+            $article->title = $request->title;
+            $article->date_of_publication = now();
+            $article->article_text = $request->article_text;
+            $article->image = $imagePath; // Save the image path
+            
+            $article->save();
+            
+            return response()->json(['message' => 'Article created successfully']);
         } else {
-            return response()->json(['message' => 'Invalid image upload.'], 400);
+            $messgae = $response->message();
+            return response()->json(['message' => $messgae]);
         }
 
-        $article = new Article();
-        $article->title = $request->title;
-        $article->date_of_publication = now();
-        $article->article_text = $request->article_text;
-        $article->image = $imagePath; // Save the image path
-        
-        $article->save();
-        
-        return response()->json(['message' => 'Article created successfully']);
     }
 
     /**
@@ -59,7 +80,15 @@ class ArticleController extends Controller
      */
     public function show(Article $article)
     {
-        return new ArticleResource($article);
+        $response = Gate::inspect('manage');
+
+        if ($response->allowed()) {
+            // The action is authorized...
+            return new ArticleResource($article);
+        } else {
+            $messgae = $response->message();
+            return response()->json(['message' => $messgae]);
+        }
     }
 
     /**
@@ -67,32 +96,41 @@ class ArticleController extends Controller
      */
     public function update(Request $request, Article $article)
     {
-        try
-        {
-            $request->validate([
-                'title' => 'required',
-                'article_text' => 'required',
-                'image' => 'required|image'
-            ]);
-        } 
-        catch (ValidationException $e)
-        {
-            return $e->validator->errors();
-        }
+        $response = Gate::inspect('manage');
 
-        if ($request->file('image')->isValid()) {
-            $imagePath = $request->file('image')->store('images', 'public'); 
+        if ($response->allowed()) {
+            // The action is authorized...
+            try
+            {
+                $request->validate([
+                    'title' => 'required',
+                    'article_text' => 'required',
+                    'image' => 'required|image'
+                ]);
+            } 
+            catch (ValidationException $e)
+            {
+                return $e->validator->errors();
+            }
+    
+            if ($request->file('image')->isValid()) {
+                $imagePath = $request->file('image')->store('images', 'public'); 
+            } else {
+                return response()->json(['message' => 'Invalid image upload.'], 400);
+            }
+    
+            $article->title = $request->input('title');
+            $article->article_text = $request->input('article_text');
+            $article->image = $imagePath; // Save the image path
+    
+            $article->save();
+    
+            return response()->json(['message' => 'Article updated successfully']);
         } else {
-            return response()->json(['message' => 'Invalid image upload.'], 400);
+            $messgae = $response->message();
+            return response()->json(['message' => $messgae]);
         }
 
-        $article->title = $request->input('title');
-        $article->article_text = $request->input('article_text');
-        $article->image = $imagePath; // Save the image path
-
-        $article->save();
-
-        return response()->json(['message' => 'Article updated successfully']);
     }
 
     /**
@@ -100,13 +138,24 @@ class ArticleController extends Controller
      */
     public function destroy(Article $article)
     {
-         // Delete the associated image, if it exists
-        if (!empty($article->image)) {
-            Storage::disk('public')->delete($article->image);
+
+        $response = Gate::inspect('manage');
+
+        if ($response->allowed()) {
+            // The action is authorized...
+            // Delete the associated image, if it exists
+           if (!empty($article->image)) {
+               Storage::disk('public')->delete($article->image);
+           }
+    
+           $article->delete();
+    
+           return response()->json(['message' => 'Article deleted successfully']);
+            
+        } else {
+            $messgae = $response->message();
+            return response()->json(['message' => $messgae]);
         }
 
-        $article->delete();
-
-        return response()->json(['message' => 'Article deleted successfully']);
     }
 }
