@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,23 +15,12 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+Route::post('/register', [AuthController::class,'register']);
+Route::post('/login', [AuthController::class,'login']);
 
-Route::middleware(['first', 'second'])->group(function(){
+Route::middleware('auth:sanctum')->group(function () {
+    // Protected routes go here
+    Route::post('/logout', [AuthController::class,'logout']);
 
-    Route::get('/', function(){
 
-    });
-    Route::get('/products', function(){
-
-    });
-});
-
-Route::controller(UsersController::class)->group(function(){
-
-    Route::get('/products', 'index');
-
-    Route::get('/products/{id}', 'show');
 });
