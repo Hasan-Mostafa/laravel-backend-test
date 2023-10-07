@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\ArticleController;
+use App\Http\Controllers\ArticleAuthorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,5 +28,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/author', AuthorController::class);
 
     Route::apiResource('/article', ArticleController::class);
+
+    Route::get('/articles-authors', [ArticleAuthorController::class, 'retrieveArticlesWithAuthors']);
+    Route::get('/articles-authors/{id}', [ArticleAuthorController::class, 'showArticleAuthors']);
+    Route::post('/articles-authors/{articleId}/{authorId}', [ArticleAuthorController::class, 'addArticleAuthor']);
+    Route::delete('/articles-authors/{articleId}/{authorId}', [ArticleAuthorController::class, 'deleteArticleAuthor']);
 
 });

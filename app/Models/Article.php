@@ -9,10 +9,17 @@ class Article extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+    
     protected $fillable = [
         'title',
         'date_of_publication',
         'article_text',
         'image'
     ];
+
+    public function authors()
+    {
+        return $this->belongsToMany(Author::class);
+    }
 }

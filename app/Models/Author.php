@@ -14,4 +14,9 @@ class Author extends Model
         'email',
         'country',
     ];
+
+    public function articles()
+    {
+        return $this->belongsToMany(Article::class);
+    }
 }

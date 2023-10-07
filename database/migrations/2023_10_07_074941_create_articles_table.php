@@ -17,7 +17,7 @@ return new class extends Migration
             $table->date('date_of_publication');
             $table->text('article_text');
             $table->string('image');
-            $table->timestamps();
+            
         });
     }
 
