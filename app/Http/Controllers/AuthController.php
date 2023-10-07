@@ -13,11 +13,19 @@ class AuthController extends Controller
   
     public function register(Request $request)
     {
-        $request->validate([
-            'full_name' => 'required',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:8',
-        ]);
+    
+        try
+        {
+            $request->validate([
+                'full_name' => 'required',
+                'email' => 'required|email|unique:users',
+                'password' => 'required|min:8',
+            ]);
+        } 
+        catch (ValidationException $e)
+        {
+            return $e->validator->errors();
+        }
 
         $user = User::create([
             'full_name' => $request->full_name,
@@ -31,10 +39,18 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|min:8',
-        ]);
+        
+        try
+        {
+            $request->validate([
+                'email' => 'required|email',
+                'password' => 'required|min:8',
+            ]);
+        } 
+        catch (ValidationException $e)
+        {
+            return $e->validator->errors();
+        }
 
         $credentials = $request->only('email', 'password');
 
